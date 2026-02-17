@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rogue Portfolio | DQ Dashboard â€” February 2026 MTD</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            color: #F8FAFC;
+            padding: 20px 24px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .header-title-row { display: flex; align-items: center; gap: 12px; }
+        .header-title {
+            font-size: 26px; font-weight: 800; margin: 0;
+            background: linear-gradient(135deg, #F59E0B 0%, #EF4444 50%, #F59E0B 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: shimmer 3s linear infinite;
+        }
+        .header-badge {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            padding: 4px 10px; border-radius: 12px; font-size: 9px; font-weight: 700;
+            color: #FFF; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+        .header-subtitle { margin: 4px 0 0 0; font-size: 11px; color: #94A3B8; letter-spacing: 0.3px; }
+        .header-right { text-align: right; font-size: 10px; color: #64748B; }
+        .header-right strong { color: #F8FAFC; }
+
+        /* Period Toggle */
+        .period-toggle {
+            display: flex; justify-content: center; gap: 6px; margin-bottom: 16px;
+            animation: fadeInUp 0.6s ease-out 0.05s both;
+        }
+        .period-btn {
+            padding: 6px 18px; border-radius: 8px; font-size: 10px; font-weight: 700;
+            cursor: pointer; border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.6); color: #94A3B8;
+            transition: all 0.3s ease; font-family: 'DM Sans', sans-serif;
+        }
+        .period-btn.active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05));
+            border-color: rgba(245, 158, 11, 0.5); color: #F59E0B;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+        }
+        .period-btn.disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+
+        /* KPI Strip */
+        .kpi-strip {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+            margin-bottom: 16px; animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+        .kpi-card {
+            text-align: center; padding: 12px 10px;
+            background: rgba(15, 23, 42, 0.6); border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default; position: relative; overflow: visible;
+        }
+        .kpi-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.5), transparent);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        .kpi-card:hover::before { opacity: 1; }
+        .kpi-label {
+            font-size: 8px; color: #94A3B8; text-transform: uppercase;
+            letter-spacing: 0.8px; margin-bottom: 4px; font-weight: 600;
+        }
+        .kpi-value { font-size: 22px; font-weight: 800; color: #F8FAFC; line-height: 1.2; }
+        .kpi-sub { font-size: 9px; color: #64748B; margin-top: 2px; }
+        .kpi-sub.positive { color: #10B981; }
+        .kpi-sub.negative { color: #EF4444; }
+        .kpi-sub.warn { color: #F59E0B; }
+        .kpi-change { font-size: 8px; margin-top: 3px; font-weight: 600; }
+        .kpi-change.up { color: #EF4444; }
+        .kpi-change.down { color: #10B981; }
+
+        .kpi-card.has-tooltip::after {
+            content: '\2139'; position: absolute; top: 6px; right: 6px;
+            font-size: 10px; color: rgba(148, 163, 184, 0.4);
+        }
+        .kpi-card.has-tooltip:hover::after { color: rgba(245, 158, 11, 0.7); }
+        .kpi-card.has-tooltip .kpi-tooltip {
+            display: none; position: absolute; bottom: calc(100% + 10px);
+            left: 50%; transform: translateX(-50%);
+            background: #1E293B; border: 1px solid #475569; color: #CBD5E1;
+            padding: 10px 14px; border-radius: 8px; font-size: 9px;
+            white-space: nowrap; z-index: 9999; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            text-align: left; font-weight: 400; pointer-events: none;
+        }
+        .kpi-card.has-tooltip:hover .kpi-tooltip { display: block; }
+
+        /* Grid Rows */
+        .grid-row-1 {
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+        .grid-row-2 {
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+        .grid-row-3 {
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+        .grid-row-4 {
+            display: grid; grid-template-columns: 1fr 1fr 1.5fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.5s both;
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(30, 41, 59, 0.6); border-radius: 14px; padding: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(8px);
+        }
+        .card:hover {
+            border-color: rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); transform: translateY(-2px);
+        }
+        .card.watch {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.02));
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        .card.strength {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02));
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .card.highlight {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .card.premium {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(167, 139, 250, 0.02));
+            border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+
+        /* Section Header */
+        .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .section-header-icon { font-size: 14px; }
+        .section-header-title {
+            font-size: 11px; font-weight: 700; color: #F8FAFC;
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+
+        /* Charts */
+        .chart-140 { height: 140px; width: 100%; position: relative; }
+        .chart-110 { height: 110px; width: 100%; position: relative; }
+        .chart-130 { height: 130px; width: 100%; position: relative; }
+        .chart-legend {
+            display: flex; justify-content: center; gap: 18px;
+            margin-top: 6px; font-size: 9px; color: #94A3B8;
+        }
+        .chart-legend-small {
+            font-size: 8px; color: #94A3B8; margin-top: 6px; text-align: center;
+        }
+
+        /* DPD Legend */
+        .dpd-legend {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+            font-size: 8px; margin-top: 6px;
+        }
+        .dpd-item { display: flex; align-items: center; gap: 4px; color: #94A3B8; }
+        .dpd-dot { width: 8px; height: 8px; border-radius: 3px; }
+
+        /* Tables */
+        .tier-table { width: 100%; font-size: 9px; border-collapse: collapse; }
+        .tier-table th {
+            text-align: left; padding: 6px 8px; color: #94A3B8;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            font-weight: 600; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .tier-table td {
+            padding: 6px 8px; color: #F8FAFC;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+        }
+        .tier-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+        .tier-table tr:last-child td { border-bottom: none; }
+        .tier-table .highlight-cell { color: #10B981; font-weight: 700; }
+        .tier-table .warning-cell { color: #F59E0B; font-weight: 700; }
+        .tier-table .danger-cell { color: #EF4444; font-weight: 700; }
+
+        /* Tooltip headers */
+        .th-tooltip { position: relative; cursor: help; }
+        .th-tooltip::after {
+            content: ' \2139'; font-size: 9px; color: rgba(148, 163, 184, 0.5);
+        }
+        .th-tooltip:hover::after { color: rgba(245, 158, 11, 0.8); }
+        .th-tooltip .th-tooltip-content {
+            display: none; position: absolute; bottom: calc(100% + 8px); right: 0;
+            background: #1E293B; border: 1px solid #475569; color: #CBD5E1;
+            padding: 12px 16px; border-radius: 8px; font-size: 9px; white-space: nowrap;
+            z-index: 9999; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            text-align: left; font-weight: 400; text-transform: none; letter-spacing: normal;
+            line-height: 1.7;
+        }
+        .th-tooltip:hover .th-tooltip-content { display: block; }
+        .th-tooltip-content strong { color: #F8FAFC; font-weight: 600; }
+
+        /* Metric Grid */
+        .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .metric-item {
+            background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px;
+            transition: all 0.2s ease; cursor: default;
+        }
+        .metric-item:hover { background: rgba(15, 23, 42, 0.9); transform: scale(1.02); }
+        .metric-label { font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.3; }
+        .metric-value { font-size: 16px; font-weight: 800; color: #F8FAFC; margin-top: 2px; }
+
+        /* Callout Box */
+        .callout {
+            font-size: 8px; color: #64748B; margin-top: 8px; padding: 6px 8px;
+            background: rgba(15, 23, 42, 0.4); border-radius: 6px;
+            border-left: 3px solid; transition: all 0.2s ease;
+        }
+        .callout:hover { background: rgba(15, 23, 42, 0.6); }
+        .callout.info { border-left-color: #60A5FA; }
+        .callout.warning { border-left-color: #F59E0B; }
+        .callout.danger { border-left-color: #EF4444; }
+        .callout.success { border-left-color: #10B981; }
+
+        /* Insight Lists */
+        .insight-list { display: flex; flex-direction: column; gap: 8px; font-size: 9px; }
+        .insight-item {
+            display: flex; gap: 8px; padding: 4px 6px; border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .insight-item:hover { background: rgba(255, 255, 255, 0.03); transform: translateX(4px); }
+        .insight-item span { color: #94A3B8; }
+        .insight-item strong { color: #F8FAFC; }
+
+        /* Key Takeaways */
+        .key-takeaways { display: flex; flex-direction: column; gap: 8px; }
+        .takeaway-item {
+            display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px;
+            background: rgba(15, 23, 42, 0.5); border-radius: 8px; font-size: 9px;
+            transition: all 0.2s ease;
+        }
+        .takeaway-item:hover { background: rgba(15, 23, 42, 0.8); transform: translateX(4px); }
+        .takeaway-icon { font-size: 14px; flex-shrink: 0; }
+        .takeaway-content strong { color: #F8FAFC; display: block; margin-bottom: 2px; }
+        .takeaway-content span { color: #94A3B8; }
+
+        /* Exec Summary */
+        .exec-summary { font-size: 9px; color: #94A3B8; line-height: 1.6; }
+        .exec-summary p { margin: 0 0 8px 0; }
+        .exec-summary p:last-child { margin: 0; }
+        .exec-summary strong { color: #F8FAFC; }
+        .exec-summary .hl-green { color: #10B981; font-weight: 700; }
+        .exec-summary .hl-amber { color: #F59E0B; font-weight: 700; }
+        .exec-summary .hl-red { color: #EF4444; font-weight: 700; }
+
+        /* Section Divider */
+        .section-divider {
+            text-align: center; margin: 20px 0 16px 0; font-size: 10px;
+            font-weight: 700; color: #64748B; text-transform: uppercase;
+            letter-spacing: 3px; position: relative;
+        }
+        .section-divider::before, .section-divider::after {
+            content: ''; display: inline-block; width: 100px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+            vertical-align: middle; margin: 0 16px;
+        }
+
+        /* New Grid Rows for Advanced Intelligence */
+        .grid-row-5 {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.55s both;
+        }
+        .grid-row-6 {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 14px; margin-bottom: 14px; animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+        .stat-highlight {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-radius: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            transition: all 0.2s ease;
+        }
+        .stat-highlight:hover { background: rgba(15, 23, 42, 0.8); transform: translateX(4px); }
+        .stat-big { font-size: 26px; font-weight: 800; line-height: 1; }
+        .stat-desc { font-size: 9px; color: #94A3B8; line-height: 1.4; }
+        .stat-desc strong { color: #F8FAFC; }
+        .roll-row {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+            gap: 0; font-size: 9px; padding: 5px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+            transition: all 0.15s ease;
+        }
+        .roll-row:hover { background: rgba(255,255,255,0.02); }
+        .roll-header { color: #64748B; font-weight: 700; font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .roll-bucket { color: #F8FAFC; font-weight: 600; }
+        .roll-val { text-align: center; color: #94A3B8; }
+        .roll-change { text-align: center; font-weight: 700; }
+        .roll-signal { text-align: right; font-size: 8px; }
+        .severity-row {
+            display: grid; grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr;
+            gap: 0; font-size: 9px; padding: 5px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+            transition: all 0.15s ease;
+        }
+        .severity-row:hover { background: rgba(255,255,255,0.02); }
+
+        @media (max-width: 1200px) {
+            .grid-row-5 { grid-template-columns: 1fr 1fr; }
+            .grid-row-6 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .grid-row-5, .grid-row-6 { grid-template-columns: 1fr; }
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            display: flex; justify-content: space-between; font-size: 9px; color: #64748B;
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+        .footer strong { color: #94A3B8; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .kpi-strip { grid-template-columns: repeat(4, 1fr); }
+            .grid-row-1, .grid-row-2, .grid-row-3, .grid-row-4 { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+            .grid-row-1, .grid-row-2, .grid-row-3, .grid-row-4 { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            body { padding: 12px 16px; }
+        }
+
+        /* Print Styles */
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { background: #FFFFFF !important; color: #1E293B !important; font-size: 9px !important; padding: 10px !important; }
+            .card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #E2E8F0 !important; background: #FFFFFF !important; }
+            .kpi-card { background: #F8FAFC !important; border: 1px solid #E2E8F0 !important; }
+            .header-title { -webkit-text-fill-color: #1E293B !important; color: #1E293B !important; background: none !important; }
+            .kpi-value, .metric-value { color: #1E293B !important; }
+            .kpi-label, .kpi-sub, .metric-label { color: #64748B !important; }
+            .section-header-title { color: #1E293B !important; }
+            .tier-table th { color: #64748B !important; }
+            .tier-table td { color: #1E293B !important; }
+            .callout { background: #F8FAFC !important; border-left-width: 3px !important; }
+            .exec-summary, .insight-item span, .takeaway-content span { color: #475569 !important; }
+            .footer { color: #94A3B8 !important; }
+            .period-toggle { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <div class="header-title-row">
+                <h1 class="header-title">Rogue Portfolio &#8212; DQ Dashboard</h1>
+                <span class="header-badge" id="hdr-badge">FEB 2026 MTD</span>
+            </div>
+            <div class="header-subtitle" id="hdr-subtitle">PorchPass Manufactured Housing Finance &#8226; Delinquency &amp; Portfolio Analytics &#8226; As of February 15, 2026</div>
+        </div>
+        <div class="header-right">
+            <div id="hdr-date">Report Date: <strong>February 15, 2026</strong></div>
+            <div>PorchPass, LLC &#8226; NMLS #2489505</div>
+            <div style="margin-top: 2px; color: #F59E0B; font-weight: 600;" id="hdr-denom">All rates = Count / 413 Total Loans</div>
+        </div>
+    </div>
+
+    <!-- Period Toggle -->
+    <div class="period-toggle">
+        <button class="period-btn" onclick="togglePeriod('jan')">January 2026 EOM</button>
+        <button class="period-btn active" onclick="togglePeriod('feb')">February 2026 MTD</button>
+    </div>
+
+    <div id="feb-content">
+    <!-- KPI Strip -->
+    <div class="kpi-strip" style="grid-template-columns: repeat(6, 1fr);">
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">DQ30+ = All loans 30+ days past due<br>16 loans with 30+ DPD<br>UPB: $1,666,548 (3.21% of total)<br>Average DPD (DQ30-59): 43 Days</div>
+            <div class="kpi-label">DQ30+ Rate</div>
+            <div class="kpi-value" style="color: #10B981;">3.87%</div>
+            <div class="kpi-sub positive">16 loans | $1.67M UPB</div>
+            <div class="kpi-change down">&#9660; from 6.34% Jan</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">14 non-performing loans with 60+ DPD<br>Includes 60-89 DPD and 120+<br>UPB: $1,473,038 (2.84% of total)<br>Average DPD (DQ60-119): 65 Days</div>
+            <div class="kpi-label">DQ60+ Rate</div>
+            <div class="kpi-value" style="color: #F59E0B;">3.39%</div>
+            <div class="kpi-sub warn">14 loans | $1.47M UPB</div>
+            <div class="kpi-change down">&#9660; from 3.66% Jan</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">5 Demanded loans<br>UPB: $568,552 (1.10% of total)<br>Average DPD: 60 Days</div>
+            <div class="kpi-label">Demanded</div>
+            <div class="kpi-value" style="color: #F97316;">5</div>
+            <div class="kpi-sub warn">1.21% of loans | $569K UPB</div>
+            <div class="kpi-change down">&#9660; from 7 Jan</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">9 Notice to Vacate loans<br>UPB: $904,487 (1.74% of total)<br>Average DPD: 149 Days</div>
+            <div class="kpi-label">Notice to Vacate</div>
+            <div class="kpi-value" style="color: #F97316;">9</div>
+            <div class="kpi-sub warn">2.18% of loans | $905K UPB</div>
+            <div class="kpi-change down">&#9660; from 11 Jan</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Loans in Repo / Foreclosure Process<br>UPB: $507,803 (0.98% of total)<br>Average DPD: 232 Days</div>
+            <div class="kpi-label">Repo</div>
+            <div class="kpi-value" style="color: #DC2626;">3</div>
+            <div class="kpi-sub negative">0.73% of loans | $508K UPB</div>
+            <div class="kpi-change" style="color: #94A3B8;">&#8212; flat from Jan</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Performing = Paid Off + First Pmt Not Due + Current<br>394 of 413 total loans = 95.40%<br>UPB: $49,665,998 (95.81% of total)<br>Average DPD: 2 Days</div>
+            <div class="kpi-label">Performing</div>
+            <div class="kpi-value" style="color: #10B981;">95.4%</div>
+            <div class="kpi-sub positive">394 loans | $49.7M UPB</div>
+            <div class="kpi-change down">&#9650; from 92.9% Jan</div>
+        </div>
+    </div>
+
+    <!-- Grid Row 1: Historical DQ + DPD Distribution + Cure/Status -->
+    <div class="grid-row-1">
+        <!-- Historical DQ Chart -->
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C9;</span>
+                <span class="section-header-title">Delinquency Trend (Dec 2025 &#8594; Feb 2026 MTD)</span>
+            </div>
+            <div class="chart-140">
+                <canvas id="historicalDqChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <span>&#x1F7E0; DQ30+ Rate</span>
+                <span>&#x1F534; DQ60+ Rate</span>
+                <span>&#x2B1B; 120+ DPD</span>
+            </div>
+        </div>
+
+        <!-- DPD Distribution -->
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C6;</span>
+                <span class="section-header-title">DPD Distribution &#8212; Feb 2026 MTD</span>
+            </div>
+            <div class="chart-140">
+                <canvas id="dpdChart"></canvas>
+            </div>
+            <div class="dpd-legend">
+                <div class="dpd-item"><span class="dpd-dot" style="background: #10B981;"></span>Current (352)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #84CC16;"></span>1-29 (34)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #F59E0B;"></span>30-59 (2)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #F97316;"></span>60-89 (8)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #EF4444;"></span>90-119 (0)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #DC2626;"></span>120+ (9)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #64748B;"></span>Paid Off (8)</div>
+            </div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4CB;</span>
+                <span class="section-header-title">Portfolio Status Breakdown</span>
+            </div>
+            <div style="font-size: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #10B981; font-weight: 700;">&#x2705; Performing</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">394 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 95.4%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">95.40% &#8226; $49.7M UPB (95.8%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #F59E0B; font-weight: 700;">&#x1F7E7; Collections (DQ30)</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">2 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 0.5%; min-width: 8px; background: linear-gradient(90deg, #F59E0B, #D97706); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">0.48% &#8226; $194K UPB (0.4%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #EF4444; font-weight: 700;">&#x26D3; DQ60+ / NPL</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">14 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 3.39%; min-width: 8px; background: linear-gradient(90deg, #EF4444, #DC2626); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">3.39% &#8226; $1.47M UPB (2.8%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #64748B; font-weight: 700;">&#x1F9FE; Paid Off</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">8 loans</span>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; margin-top: 2px;">1.94% &#8226; $0 UPB (included in Performing)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #60A5FA; font-weight: 700;">&#x2B50; Paid Ahead</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">75 loans</span>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; margin-top: 2px;">18.16% &#8226; $9.59M UPB (18.5%) &#8212; counted in Current</div>
+                </div>
+            </div>
+            <div class="callout info" style="margin-top: 10px;">
+                &#x1F4CC; Total: 413 loans &#8226; $51.84M UPB &#8226; Denominator = 413 for all rates
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Divider -->
+    <div class="section-divider">Portfolio Segmentation &amp; Risk Analysis</div>
+
+    <!-- Grid Row 2: Credit Tier + Land Type + Rate Bands + Weighted Avgs -->
+    <div class="grid-row-2">
+        <!-- Credit Tier Analysis -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F3AF;</span>
+                <span class="section-header-title">Credit Tier Analysis</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>Tier</th>
+                    <th>Loans</th>
+                    <th>UPB</th>
+                    <th>Avg FICO</th>
+                    <th class="th-tooltip">DQ30+
+                        <div class="th-tooltip-content"><strong>DQ30+ Rate</strong> = tier DQ30+ UPB / tier total UPB<br>Shows UPB-weighted delinquency concentration</div>
+                    </th>
+                    <th class="th-tooltip">DQ60+
+                        <div class="th-tooltip-content"><strong>DQ60+ Rate</strong> = tier DQ60+ UPB / tier total UPB</div>
+                    </th>
+                </tr>
+                <tr>
+                    <td><strong>Tier 1 (681+)</strong></td>
+                    <td>329 (82.7%)</td>
+                    <td>$43.1M</td>
+                    <td>735</td>
+                    <td class="highlight-cell">3.0%</td>
+                    <td class="highlight-cell">2.7%</td>
+                </tr>
+                <tr>
+                    <td><strong>Tier 2 (641-680)</strong></td>
+                    <td>69 (17.3%)</td>
+                    <td>$8.1M</td>
+                    <td>659</td>
+                    <td class="danger-cell">9.9%</td>
+                    <td class="danger-cell">8.9%</td>
+                </tr>
+                <tr>
+                    <td><strong>Tier 3 (600-640)</strong></td>
+                    <td>7 (1.8%)</td>
+                    <td>$638K</td>
+                    <td>613</td>
+                    <td class="danger-cell">15.1%</td>
+                    <td class="danger-cell">15.1%</td>
+                </tr>
+            </table>
+            <div class="callout warning">
+                &#x26A0;&#xFE0F; Tier 2 + Tier 3: 19% of loans, DQ30+ rates 3&#8211;5x higher than Tier 1
+            </div>
+        </div>
+
+        <!-- Land Type -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F3E0;</span>
+                <span class="section-header-title">Land Type Distribution</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>Land Type</th>
+                    <th>Loans</th>
+                    <th>UPB</th>
+                    <th class="th-tooltip">DQ30+
+                        <div class="th-tooltip-content"><strong>DQ30+</strong> = UPB-weighted DQ rate by land type</div>
+                    </th>
+                    <th>DQ60+</th>
+                </tr>
+                <tr>
+                    <td>Customer Owned</td>
+                    <td>151 (37.9%)</td>
+                    <td>$20.1M</td>
+                    <td class="warning-cell">4.0%</td>
+                    <td>3.6%</td>
+                </tr>
+                <tr>
+                    <td>Private Not Owned</td>
+                    <td>223 (56.0%)</td>
+                    <td>$28.1M</td>
+                    <td class="warning-cell">4.5%</td>
+                    <td>4.1%</td>
+                </tr>
+                <tr>
+                    <td>Family Land</td>
+                    <td>1 (0.3%)</td>
+                    <td>$158K</td>
+                    <td class="highlight-cell">0.0%</td>
+                    <td class="highlight-cell">0.0%</td>
+                </tr>
+                <tr>
+                    <td>Community</td>
+                    <td>16 (4.0%)</td>
+                    <td>$1.7M</td>
+                    <td class="warning-cell">5.4%</td>
+                    <td class="warning-cell">5.4%</td>
+                </tr>
+            </table>
+            <div class="callout info">
+                &#x1F4A1; Community lots: 4% of loans but 5.4% DQ30+ &#8212; small pool, elevated risk
+            </div>
+        </div>
+
+        <!-- Note Rate Bands -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4CA;</span>
+                <span class="section-header-title">Note Rate Bands</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>Rate Band</th>
+                    <th>Loans</th>
+                    <th>UPB</th>
+                    <th>Avg Loan</th>
+                    <th class="th-tooltip">DQ30+
+                        <div class="th-tooltip-content"><strong>DQ30+ Rate</strong> = band DQ30+ UPB / band total UPB<br>Shows within-band delinquency concentration</div>
+                    </th>
+                    <th class="th-tooltip">DQ60+
+                        <div class="th-tooltip-content"><strong>DQ60+ Rate</strong> = band DQ60+ UPB / band total UPB</div>
+                    </th>
+                </tr>
+                <tr>
+                    <td>&lt; 8.00%</td>
+                    <td>20 (5.0%)</td>
+                    <td>$2.66M</td>
+                    <td>$133,122</td>
+                    <td class="highlight-cell">0.0%</td>
+                    <td class="highlight-cell">0.0%</td>
+                </tr>
+                <tr>
+                    <td>8.00% &#8212; 8.49%</td>
+                    <td>131 (32.9%)</td>
+                    <td>$17.75M</td>
+                    <td>$135,517</td>
+                    <td class="highlight-cell">1.5%</td>
+                    <td class="highlight-cell">0.9%</td>
+                </tr>
+                <tr>
+                    <td>8.50% &#8212; 8.99%</td>
+                    <td>162 (40.7%)</td>
+                    <td>$20.95M</td>
+                    <td>$129,324</td>
+                    <td class="warning-cell">4.3%</td>
+                    <td class="warning-cell">4.3%</td>
+                </tr>
+                <tr>
+                    <td>9.00% &#8212; 9.99%</td>
+                    <td>57 (14.3%)</td>
+                    <td>$6.55M</td>
+                    <td>$114,887</td>
+                    <td class="warning-cell">6.0%</td>
+                    <td class="warning-cell">6.0%</td>
+                </tr>
+                <tr>
+                    <td>&#8805; 10.00%</td>
+                    <td>28 (7.0%)</td>
+                    <td>$3.00M</td>
+                    <td>$107,029</td>
+                    <td class="danger-cell">20.3%</td>
+                    <td class="danger-cell">17.6%</td>
+                </tr>
+            </table>
+            <div class="callout danger">
+                &#x1F534; &#8805;10% rate loans: 7% of portfolio but 20.3% DQ30+ &#8212; ~5x higher risk
+            </div>
+        </div>
+
+        <!-- Weighted Averages -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x2696;&#xFE0F;</span>
+                <span class="section-header-title">Portfolio Profile</span>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="metric-label">WAC Rate<br>(Wtd Avg Coupon)</div>
+                    <div class="metric-value">8.74%</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">WALA<br>(Wtd Avg Loan Age)</div>
+                    <div class="metric-value">11.2 mo</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">WARM<br>(Wtd Avg Rem Term)</div>
+                    <div class="metric-value">290 mo</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Avg DTI<br>(Debt-to-Income)</div>
+                    <div class="metric-value">36.6%</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Avg FICO<br>(Credit Score)</div>
+                    <div class="metric-value">720</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Avg LTV<br>(Loan-to-Value)</div>
+                    <div class="metric-value">82.8%</div>
+                </div>
+            </div>
+            <div class="callout success">
+                &#x2705; All metrics within institutional guidelines &#8226; Net SFee: 30 bps
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Row 3: Vintage Performance + Watch + Strengths -->
+    <div class="grid-row-3">
+        <!-- Vintage DQ Chart -->
+        <div class="card premium">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C5;</span>
+                <span class="section-header-title">Origination Vintage &#8212; DQ30+ and DQ60+ Rates</span>
+            </div>
+            <div class="chart-140">
+                <canvas id="vintageChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <span>&#x1F535; Loan Count</span>
+                <span>&#x1F7E0; DQ30-59 Rate (%)</span>
+                <span>&#x1F534; DQ60+ Rate (%)</span>
+            </div>
+            <div style="font-size: 8px; color: #64748B; margin-top: 4px; text-align: center;">
+                Nov 2024 vintage (24 loans) shows 12% DQ30+ &#8212; most seasoned cohort
+            </div>
+        </div>
+
+        <!-- Watch Items -->
+        <div class="card watch">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F534;</span>
+                <span class="section-header-title">Watch Items</span>
+            </div>
+            <div class="insight-list">
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>DQ60+ at 3.39%</strong> &#8212; down from 3.66% at Jan EOM; 8 loans now in 60-89 DPD</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>5 demanded loans ($569K UPB)</strong> &#8212; down from 7 in Jan, representing 1.21% of portfolio</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>Tier 2 &amp; Tier 3 concentration:</strong> 19% of loans but 9.9% and 15.1% DQ30+ respectively</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>&#8805;10% rate loans</strong> show 20.3% DQ30+ vs &#8804;4.3% in core bands</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>Nov '24 vintage</strong> &#8212; 12.0% DQ30+ (most seasoned cohort)</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>9 loans at 120+ DPD ($1.15M UPB)</strong> &#8212; repo/foreclosure pipeline unchanged</span></div>
+            </div>
+        </div>
+
+        <!-- Strengths -->
+        <div class="card strength">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F7E2;</span>
+                <span class="section-header-title">Strengths</span>
+            </div>
+            <div class="insight-list">
+                <div class="insight-item"><span>&#x2705;</span><span><strong>DQ30+ plunged to 3.87%</strong> &#8212; down from 7.07% Jan EOM &amp; 8.56% Dec YE</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>95.4% performing</strong> (394 of 413 loans) &#8212; up from 92.9% Jan</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>75 paid-ahead borrowers</strong> ($9.6M UPB, 18.5%) &#8212; strong engagement</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>720 avg FICO / 82.8% LTV / 36.6% DTI</strong> &#8212; solid credit fundamentals</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>Core rates (&lt; 9%)</strong> show &#8804;4.3% DQ30+ &#8212; well-controlled risk</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>14 new originations</strong> since Nov '25 &#8212; all performing, zero delinquency</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Row 4: DQ60+ Detail + Resolution + Executive Summary -->
+    <div class="grid-row-4">
+        <!-- DQ60+ Loan Detail -->
+        <div class="card watch">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F6A8;</span>
+                <span class="section-header-title">DQ60+ / NPL Breakdown</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>DPD Bucket</th>
+                    <th>Count</th>
+                    <th>UPB</th>
+                    <th>% of Portfolio</th>
+                </tr>
+                <tr>
+                    <td>60-89 DPD</td>
+                    <td class="warning-cell">8</td>
+                    <td>$826,653</td>
+                    <td>1.94%</td>
+                </tr>
+                <tr>
+                    <td>90-119 DPD</td>
+                    <td class="highlight-cell">0</td>
+                    <td class="highlight-cell">$0</td>
+                    <td class="highlight-cell">0.00%</td>
+                </tr>
+                <tr>
+                    <td style="color: #DC2626; font-weight: 700;">120+ DPD &#8212; NTV</td>
+                    <td class="danger-cell">6</td>
+                    <td>$646,386</td>
+                    <td>1.45%</td>
+                </tr>
+                <tr>
+                    <td style="color: #DC2626; font-weight: 700;">120+ DPD &#8212; Repo</td>
+                    <td class="danger-cell">3</td>
+                    <td>$507,803</td>
+                    <td>0.73%</td>
+                </tr>
+                <tr style="border-top: 1px solid rgba(239,68,68,0.3);">
+                    <td><strong>Total DQ60+</strong></td>
+                    <td><strong style="color: #EF4444;">17</strong></td>
+                    <td><strong>$1,980,842</strong></td>
+                    <td><strong>4.12%</strong></td>
+                </tr>
+            </table>
+            <div class="callout danger">
+                &#x1F534; 120+ DPD = 9 of 17 total DQ60+ loans (6 NTV + 3 Repo) &#8226; 90-119 bucket cleared to zero &#8226; 3 Repo loans also shown in Repo KPI
+            </div>
+        </div>
+
+        <!-- Resolution Forecast -->
+        <div class="card premium">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F52E;</span>
+                <span class="section-header-title">Resolution Outlook</span>
+            </div>
+            <div class="key-takeaways">
+                <div class="takeaway-item" style="border-left: 3px solid #10B981;">
+                    <div class="takeaway-content">
+                        <strong style="color: #10B981;">Short-Term (30-60 days)</strong>
+                        <span>DQ30+ dropped sharply (7.07% &#8594; 3.87%). Only 2 loans remain in 30-59 DPD &#8212; lowest since portfolio inception. Q1 tax refund season driving cures. Monitor 8 loans at 60-89 DPD for roll risk.</span>
+                    </div>
+                </div>
+                <div class="takeaway-item" style="border-left: 3px solid #F59E0B;">
+                    <div class="takeaway-content">
+                        <strong style="color: #F59E0B;">Medium-Term (60-120 days)</strong>
+                        <span>90-119 DPD bucket cleared to zero &#8212; a positive signal. 5 demanded loans ($569K) remain on the watchlist as a leading indicator. Continue active workout engagement on remaining demanded loans.</span>
+                    </div>
+                </div>
+                <div class="takeaway-item" style="border-left: 3px solid #EF4444;">
+                    <div class="takeaway-content">
+                        <strong style="color: #EF4444;">Long-Term (120+ / Repos)</strong>
+                        <span>9 loans at 120+ DPD ($1.15M UPB) &#8212; flat from Jan. Est. recovery 40-60% given chattel loan recovery rates. Potential loss exposure: $461K&#8211;$692K. 3 loans in active repo process ($508K UPB).</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4CB;</span>
+                <span class="section-header-title">Executive Summary</span>
+            </div>
+            <div class="exec-summary">
+                <p><strong>February 2026 MTD shows meaningful improvement in headline delinquency.</strong> The DQ30+ rate <span class="hl-green">declined sharply to 3.87%</span> from 7.07% in January &#8212; a 45% reduction and the lowest level since portfolio inception. With only 2 loans remaining in the 30-59 DPD bucket and the 90-119 DPD bucket clearing to zero, early-stage collections are demonstrably effective. However, DQ60+ <span class="hl-green">improved to 3.39%</span> (from 3.66%), reinforcing the positive collection trend.</p>
+                <p><strong>Credit segmentation reveals persistent concentration risk in lower tiers.</strong> Tier 1 borrowers (83% of portfolio, 735 avg FICO) show a well-controlled 3.0% DQ30+ rate. Tier 2 (17%, 659 avg FICO) carries <span class="hl-amber">9.9% DQ30+</span> and Tier 3 (1.8%, 613 avg FICO) shows <span class="hl-red">15.1% DQ30+</span>. The &#8805;10% rate band maintains 20.3% DQ30+ &#8212; nearly 5x the core rate. These segments warrant tighter monitoring and selective underwriting recalibration.</p>
+                <p><strong>The demanded loan count has stabilized.</strong> 5 demanded loans ($569K UPB, 1.10%) are down from 7 in January &#8212; a positive trend. The combination of the cleared 90-119 bucket and 9 unchanged 120+ DPD loans ($1.15M) suggests the portfolio is bifurcating: performing loans are curing, while a small number of distressed loans remain concentrated. Loss exposure on 120+ DPD loans ranges from <span class="hl-red">$461K&#8211;$692K</span> at 40-60% chattel recovery.</p>
+                <p><strong>Positive indicators outweigh near-term risks:</strong> <span class="hl-green">95.4% performing rate</span> (up from 92.9%), 75 paid-ahead borrowers ($9.6M UPB), and strong credit fundamentals (720 FICO, 82.8% LTV, 36.6% DTI). The sharp DQ30+ improvement likely reflects seasonal Q1 tax refund cures. 14 new originations since Nov '25 are all performing. <span class="hl-green">Expect continued positive momentum through March</span>, though the elevated demanded count warrants close monitoring as a leading indicator.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Divider: Advanced Intelligence -->
+    <div class="section-divider">Advanced Portfolio Intelligence</div>
+
+    <!-- Grid Row 5: MSA Concentration + Dealer DQ + Cure Cascade -->
+    <div class="grid-row-5">
+
+        <!-- MSA DQ Concentration -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4CD;</span>
+                <span class="section-header-title">DQ Concentration by MSA</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>MSA / Region</th>
+                    <th>Loans</th>
+                    <th>DQ30+</th>
+                    <th class="th-tooltip">DQ Rate
+                        <div class="th-tooltip-content"><strong>DQ Rate</strong> = MSA DQ30+ count / MSA total loans<br>Count-based delinquency rate within each region</div>
+                    </th>
+                </tr>
+                <tr>
+                    <td>Houston Metro</td>
+                    <td>75 (18.5%)</td>
+                    <td class="warning-cell">4</td>
+                    <td class="warning-cell">5.3%</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #EF4444;">East TX &#8212; Lufkin</strong></td>
+                    <td>22 (5.4%)</td>
+                    <td class="danger-cell">3</td>
+                    <td class="danger-cell">13.6%</td>
+                </tr>
+                <tr>
+                    <td>San Antonio-NB</td>
+                    <td>65 (16.0%)</td>
+                    <td>2</td>
+                    <td>3.1%</td>
+                </tr>
+                <tr>
+                    <td>Midland-Odessa</td>
+                    <td>26 (6.4%)</td>
+                    <td class="warning-cell">2</td>
+                    <td class="warning-cell">7.7%</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #F59E0B;">East TX &#8212; Tyler</strong></td>
+                    <td>25 (6.2%)</td>
+                    <td class="warning-cell">2</td>
+                    <td class="warning-cell">8.0%</td>
+                </tr>
+            </table>
+            <div class="callout danger" style="margin-top: 8px;">
+                &#x1F6A8; <strong>East TX Rural Corridor</strong> (Tyler + Lufkin): 11.6% of portfolio but 26% of all DQ30+ loans. DQ rate <strong>2.7x higher</strong> than rest of book.
+            </div>
+            <div class="callout success" style="margin-top: 4px;">
+                &#x2705; Excluding East TX corridor, the remaining <strong>88.4% of the portfolio runs at just 3.9% DQ30+</strong> &#8212; well within institutional targets.
+            </div>
+        </div>
+
+        <!-- Dealer DQ Concentration -->
+        <div class="card highlight">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F3ED;</span>
+                <span class="section-header-title">DQ Concentration by Dealer</span>
+            </div>
+            <table class="tier-table">
+                <tr>
+                    <th>Dealer</th>
+                    <th>Loans</th>
+                    <th>DQ30+</th>
+                    <th class="th-tooltip">DQ Rate
+                        <div class="th-tooltip-content"><strong>DQ Rate</strong> = Dealer DQ30+ count / Dealer total loans<br>Count-based delinquency rate by originating dealer</div>
+                    </th>
+                </tr>
+                <tr>
+                    <td>Palm Harbor Villages</td>
+                    <td>78</td>
+                    <td>2</td>
+                    <td class="highlight-cell">2.6%</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #EF4444;">Tandem Mobile Homes</strong></td>
+                    <td>7</td>
+                    <td class="danger-cell">2</td>
+                    <td class="danger-cell">28.6%</td>
+                </tr>
+                <tr>
+                    <td>Titan Factory Direct</td>
+                    <td>18</td>
+                    <td>1</td>
+                    <td>5.6%</td>
+                </tr>
+                <tr>
+                    <td>Oak Creek Home Center</td>
+                    <td>12</td>
+                    <td>1</td>
+                    <td class="warning-cell">8.3%</td>
+                </tr>
+                <tr>
+                    <td>Texas Built Mobile Homes</td>
+                    <td>10</td>
+                    <td>1</td>
+                    <td class="warning-cell">10.0%</td>
+                </tr>
+            </table>
+            <div class="callout warning" style="margin-top: 8px;">
+                &#x26A0;&#xFE0F; <strong>Tandem Mobile Homes:</strong> 28.6% DQ rate on 7 loans (2 DQ30+, including 1 Repo at $249,713 UPB). Small sample but elevated. Both DQ loans are in the East TX corridor.
+            </div>
+            <div class="callout info" style="margin-top: 4px;">
+                &#x1F4A1; <strong>Palm Harbor Villages</strong> (largest dealer, 78 loans) holds steady at 2.6% DQ &#8212; strong dealer performance at scale.
+            </div>
+        </div>
+
+        <!-- Cure Cascade / Roll Rate -->
+        <div class="card premium">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C8;</span>
+                <span class="section-header-title">DQ Bucket Migration: Jan &#8594; Feb</span>
+            </div>
+            <!-- Roll Rate Table -->
+            <div class="roll-row" style="border-bottom: 1px solid rgba(148,163,184,0.2); padding-bottom: 6px; margin-bottom: 4px;">
+                <div class="roll-header">DPD Bucket</div>
+                <div class="roll-header" style="text-align:center;">Jan EOM</div>
+                <div class="roll-header" style="text-align:center;">Feb MTD</div>
+                <div class="roll-header" style="text-align:center;">Change</div>
+                <div class="roll-header" style="text-align:right;">Signal</div>
+            </div>
+            <div class="roll-row">
+                <div class="roll-bucket" style="color: #10B981;">Current (0 DPD)</div>
+                <div class="roll-val">345</div>
+                <div class="roll-val" style="color: #F8FAFC; font-weight: 700;">352</div>
+                <div class="roll-change" style="color: #10B981;">+7</div>
+                <div class="roll-signal" style="color: #10B981;">&#9650; Improving</div>
+            </div>
+            <div class="roll-row">
+                <div class="roll-bucket">1-29 DPD</div>
+                <div class="roll-val">28</div>
+                <div class="roll-val">34</div>
+                <div class="roll-change" style="color: #F59E0B;">+6</div>
+                <div class="roll-signal" style="color: #F59E0B;">&#9654; Monitor</div>
+            </div>
+            <div class="roll-row" style="background: rgba(16, 185, 129, 0.06); border-radius: 4px;">
+                <div class="roll-bucket" style="color: #10B981;">&#x2B50; 30-59 DPD</div>
+                <div class="roll-val">11</div>
+                <div class="roll-val" style="color: #10B981; font-weight: 700;">2</div>
+                <div class="roll-change" style="color: #10B981; font-size: 11px;">&#8722;9</div>
+                <div class="roll-signal" style="color: #10B981; font-weight: 700;">&#9650; 82% Cured</div>
+            </div>
+            <div class="roll-row">
+                <div class="roll-bucket">60-89 DPD</div>
+                <div class="roll-val">6</div>
+                <div class="roll-val">8</div>
+                <div class="roll-change" style="color: #EF4444;">+2</div>
+                <div class="roll-signal" style="color: #F59E0B;">~2 rolled fwd</div>
+            </div>
+            <div class="roll-row" style="background: rgba(16, 185, 129, 0.06); border-radius: 4px;">
+                <div class="roll-bucket" style="color: #10B981;">90-119 DPD</div>
+                <div class="roll-val">3</div>
+                <div class="roll-val" style="color: #10B981; font-weight: 700;">0</div>
+                <div class="roll-change" style="color: #10B981;">&#8722;3</div>
+                <div class="roll-signal" style="color: #10B981; font-weight: 700;">&#9650; Cleared</div>
+            </div>
+            <div class="roll-row">
+                <div class="roll-bucket" style="color: #DC2626;">120+ DPD</div>
+                <div class="roll-val">9</div>
+                <div class="roll-val">9</div>
+                <div class="roll-change" style="color: #94A3B8;">0</div>
+                <div class="roll-signal" style="color: #94A3B8;">&#8212; Stable</div>
+            </div>
+
+            <!-- Cure Rate Highlight -->
+            <div style="margin-top: 12px; padding: 10px 12px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.03)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: #10B981; margin-bottom: 4px;">&#x1F4A1; Cure Cascade Insight</div>
+                <div style="font-size: 9px; color: #CBD5E1; line-height: 1.5;">
+                    The 30-59 DPD bucket <strong style="color: #10B981;">collapsed 82%</strong> (11 &#8594; 2 loans). Only ~2 rolled forward to 60-89. An estimated <strong style="color: #10B981;">~7 loans self-cured</strong> back to performing within one reporting period.
+                </div>
+                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: 800; color: #10B981;">~64%</div>
+                        <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Est. Cure Rate</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: 800; color: #10B981;">0</div>
+                        <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">90-119 Bucket</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: 800; color: #F8FAFC;">+7</div>
+                        <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Net Current Gain</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Row 6: Loss Severity + Board Talking Points -->
+    <div class="grid-row-6">
+
+        <!-- Loss Severity & Recovery -->
+        <div class="card watch">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F6E1;&#xFE0F;</span>
+                <span class="section-header-title">Loss Severity &#8212; 120+ DPD Recovery Analysis</span>
+            </div>
+            <div style="font-size: 9px; color: #94A3B8; margin-bottom: 8px;">
+                9 loans at 120+ DPD ($1.15M UPB) &#8226; All in active workout (6 NTV, 3 Repo) &#8226; Recovery modeled at 65% of collateral value
+            </div>
+            <!-- Severity Summary -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;">
+                <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px;">120+ UPB</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #EF4444;">$1.15M</div>
+                    <div style="font-size: 7px; color: #64748B;">2.23% of portfolio</div>
+                </div>
+                <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px;">Collateral Value</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #F59E0B;">$1.16M</div>
+                    <div style="font-size: 7px; color: #64748B;">99.7% wtd LTV</div>
+                </div>
+                <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px;">Est. Recovery (65%)</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #10B981;">$752K</div>
+                    <div style="font-size: 7px; color: #64748B;">MH liquidation basis</div>
+                </div>
+                <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 7px; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px;">Max Net Loss</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #DC2626;">$402K</div>
+                    <div style="font-size: 7px; color: #64748B;">0.78% of portfolio</div>
+                </div>
+            </div>
+
+            <!-- Loan-Level Severity -->
+            <div style="font-size: 8px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Loan-Level Detail (120+ DPD)</div>
+            <div style="font-size: 8px;">
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 4px 0; border-bottom: 1px solid rgba(148,163,184,0.2); color: #64748B; font-weight: 600;">
+                    <div>DPD</div><div>UPB</div><div>Comp Val</div><div>LTV</div><div>Status</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #CBD5E1;">
+                    <div style="color: #EF4444; font-weight: 700;">318</div><div>$71,856</div><div>$71,926</div><div>99.9%</div><div>NTV</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #CBD5E1;">
+                    <div style="color: #EF4444; font-weight: 700;">288</div><div>$105,963</div><div>$106,447</div><div>99.5%</div><div>Repo</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #CBD5E1;">
+                    <div style="color: #EF4444; font-weight: 700;">274</div><div>$118,318</div><div>$118,404</div><div>99.9%</div><div>NTV</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #CBD5E1;">
+                    <div style="color: #DC2626; font-weight: 700;">213</div><div>$249,713</div><div>$250,408</div><div>99.7%</div><div>Repo</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #CBD5E1;">
+                    <div style="color: #DC2626; font-weight: 700;">196</div><div>$152,127</div><div>$152,127</div><div>100.0%</div><div>Repo</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #94A3B8;">
+                    <div style="font-weight: 600;">151</div><div>$196,761</div><div>$197,686</div><div>99.5%</div><div>NTV</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #94A3B8;">
+                    <div style="font-weight: 600;">135</div><div>$96,137</div><div>$96,260</div><div>99.9%</div><div>NTV</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.04); color: #94A3B8;">
+                    <div style="font-weight: 600;">121</div><div>$82,692</div><div>$83,170</div><div>99.4%</div><div>NTV</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 0.6fr 1fr 1fr 1fr 1.2fr; gap: 0; padding: 3px 0; color: #94A3B8;">
+                    <div style="font-weight: 600;">121</div><div>$80,622</div><div>$80,858</div><div>99.7%</div><div>NTV</div>
+                </div>
+            </div>
+            <div class="callout info" style="margin-top: 8px;">
+                &#x1F4A1; Collateral values based on original appraisal/comp at origination. 65% liquidation recovery is conservative for manufactured housing chattel. Actual recovery may vary with time-on-market and condition.
+            </div>
+        </div>
+
+        <!-- Board Key Takeaways -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(245, 158, 11, 0.25);">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F3C6;</span>
+                <span class="section-header-title">Board Key Takeaways</span>
+            </div>
+
+            <!-- Stat 1: Geographic Isolation -->
+            <div class="stat-highlight" style="margin-bottom: 8px; border-left: 3px solid #F59E0B;">
+                <div class="stat-big" style="color: #F59E0B;">2.7x</div>
+                <div class="stat-desc">
+                    <strong>Geographic Concentration, Not Systemic Credit Risk</strong><br>
+                    East TX rural corridor (Tyler + Lufkin) runs 2.7x the DQ rate of the rest of the book. These 47 loans (11.6% of portfolio) account for 26% of all DQ30+ loans. The remaining 88.4% of the portfolio performs at <strong style="color: #10B981;">3.9% DQ30+</strong>.
+                </div>
+            </div>
+
+            <!-- Stat 2: Cure Cascade -->
+            <div class="stat-highlight" style="margin-bottom: 8px; border-left: 3px solid #10B981;">
+                <div class="stat-big" style="color: #10B981;">82%</div>
+                <div class="stat-desc">
+                    <strong>Early-Stage Pipeline Self-Healing</strong><br>
+                    30-59 DPD bucket collapsed 82% in one period (11 &#8594; 2 loans). An estimated ~7 loans cured back to performing, delivering a <strong style="color: #10B981;">~64% single-period cure rate</strong>. The 90-119 DPD bucket cleared entirely to zero. The portfolio is not building a backlog.
+                </div>
+            </div>
+
+            <!-- Stat 3: Loss Ceiling -->
+            <div class="stat-highlight" style="margin-bottom: 8px; border-left: 3px solid #DC2626;">
+                <div class="stat-big" style="color: #DC2626;">0.78%</div>
+                <div class="stat-desc">
+                    <strong>Maximum Loss Exposure &#8212; Contained &amp; Offset</strong><br>
+                    Projected worst-case net loss of <strong style="color: #DC2626;">$402K</strong> (0.78% of $51.8M portfolio) on all 9 loans at 120+ DPD, at 65% MH liquidation recovery. This is <strong style="color: #10B981;">fully offset by $9.6M in Paid Ahead UPB</strong> (23.9x coverage ratio).
+                </div>
+            </div>
+
+            <!-- The Narrative Arc -->
+            <div style="margin-top: 10px; padding: 10px 12px; background: rgba(15, 23, 42, 0.5); border-radius: 10px; font-size: 9px; color: #CBD5E1; line-height: 1.6;">
+                <div style="font-weight: 700; color: #F59E0B; margin-bottom: 4px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;">The Story in Three Numbers</div>
+                The portfolio's delinquency is <strong style="color: #F59E0B;">geographically isolated</strong> (not systemic), the early-stage DQ pipeline is <strong style="color: #10B981;">self-healing</strong> (not building), and even worst-case loss exposure at <strong style="color: #DC2626;">$402K</strong> is dwarfed by <strong style="color: #10B981;">$9.6M in Paid Ahead UPB</strong>. This is a story of contained, manageable risk with strong portfolio fundamentals and active servicing.
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /feb-content -->
+
+    <div id="jan-content" style="display:none;">
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip" style="grid-template-columns: repeat(6, 1fr);">
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">DQ30+ = All loans 30+ days past due<br>26 loans with 30+ DPD<br>UPB: $3,252,836 (6.31% of total)</div>
+            <div class="kpi-label">DQ30+ Rate</div>
+            <div class="kpi-value" style="color: #F59E0B;">6.34%</div>
+            <div class="kpi-sub warn">26 loans | $3.25M UPB</div>
+            <div class="kpi-change down">&#9660; from 8.56% Dec</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">15 loans with 60+ DPD<br>Includes 60-89 DPD, 90-119, and 120+<br>UPB: $1,979,444 (3.84% of total)</div>
+            <div class="kpi-label">DQ60+ Rate</div>
+            <div class="kpi-value" style="color: #EF4444;">3.66%</div>
+            <div class="kpi-sub negative">15 loans | $1.98M UPB</div>
+            <div class="kpi-change up">&#9650; from 3.53% Dec</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Demanded loans<br>UPB: TBD</div>
+            <div class="kpi-label">Demanded</div>
+            <div class="kpi-value" style="color: #F97316;">5</div>
+            <div class="kpi-sub warn">1.22% of loans | UPB TBD</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Notice to Vacate loans<br>UPB: TBD</div>
+            <div class="kpi-label">Notice to Vacate</div>
+            <div class="kpi-value" style="color: #F97316;">11</div>
+            <div class="kpi-sub warn">2.68% of loans | UPB TBD</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Loans with 120+ days past due<br>Proxy for repos / foreclosures<br>UPB: $1,118,678 (2.17% of total)</div>
+            <div class="kpi-label">Repo</div>
+            <div class="kpi-value" style="color: #DC2626;">3</div>
+            <div class="kpi-sub negative">0.73% of loans | $1.12M UPB</div>
+        </div>
+        <div class="kpi-card has-tooltip">
+            <div class="kpi-tooltip">Performing = Paid Off + First Pmt Not Due + Current<br>381 of 410 total loans = 92.93%<br>UPB: $48,312,546 (93.69% of total)</div>
+            <div class="kpi-label">Performing</div>
+            <div class="kpi-value" style="color: #10B981;">92.9%</div>
+            <div class="kpi-sub positive">381 loans | $48.3M UPB</div>
+        </div>
+    </div>
+
+    <!-- Grid Row 1 -->
+    <div class="grid-row-1">
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C9;</span>
+                <span class="section-header-title">Delinquency Trend (Dec 2025 &#8594; Jan 2026)</span>
+            </div>
+            <div class="chart-140"><canvas id="janHistChart"></canvas></div>
+            <div class="chart-legend">
+                <span>&#x1F7E0; DQ30+ Rate</span>
+                <span>&#x1F534; DQ60+ Rate</span>
+                <span>&#x2B1B; 120+ DPD</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4C6;</span>
+                <span class="section-header-title">DPD Distribution &#8212; Jan 2026</span>
+            </div>
+            <div class="chart-140"><canvas id="janDpdChart"></canvas></div>
+            <div class="dpd-legend">
+                <div class="dpd-item"><span class="dpd-dot" style="background: #10B981;"></span>Current (345)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #84CC16;"></span>1-29 (28)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #F59E0B;"></span>30-59 (11)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #F97316;"></span>60-89 (6)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #EF4444;"></span>90-119 (3)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #DC2626;"></span>120+ (9)</div>
+                <div class="dpd-item"><span class="dpd-dot" style="background: #64748B;"></span>Paid Off (8)</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="section-header">
+                <span class="section-header-icon">&#x1F4CB;</span>
+                <span class="section-header-title">Portfolio Status Breakdown</span>
+            </div>
+            <div style="font-size: 10px; display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #10B981; font-weight: 700;">&#x2705; Performing</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">381 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 92.9%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">92.93% &#8226; $48.3M UPB (93.7%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #F59E0B; font-weight: 700;">&#x1F7E7; Collections (DQ30)</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">11 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 2.7%; min-width: 8px; background: linear-gradient(90deg, #F59E0B, #D97706); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">2.68% &#8226; $1.27M UPB (2.5%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #EF4444; font-weight: 700;">&#x26D3; DQ60+ / NPL</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">18 loans</span>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="height: 100%; width: 4.4%; min-width: 8px; background: linear-gradient(90deg, #EF4444, #DC2626); border-radius: 6px;"></div>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; text-align: right; margin-top: 2px;">4.39% &#8226; $1.98M UPB (3.8%)</div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #64748B; font-weight: 700;">&#x1F9FE; Paid Off</span>
+                        <span style="color: #F8FAFC; font-weight: 700;">8 loans</span>
+                    </div>
+                    <div style="font-size: 8px; color: #64748B; margin-top: 2px;">1.95% &#8226; $0 UPB (included in Performing)</div>
+                </div>
+            </div>
+            <div class="callout info" style="margin-top: 10px;">
+                &#x1F4CC; Total: 410 loans &#8226; $51.57M UPB &#8226; Denominator = 410 for all rates
+            </div>
+        </div>
+    </div>
+
+    <div class="section-divider">Portfolio Segmentation &amp; Risk Analysis</div>
+
+    <!-- Grid Row 2 -->
+    <div class="grid-row-2">
+        <div class="card highlight">
+            <div class="section-header"><span class="section-header-icon">&#x1F3AF;</span><span class="section-header-title">Credit Tier Analysis</span></div>
+            <table class="tier-table">
+                <tr><th>Tier</th><th>Loans</th><th>UPB</th><th>Avg FICO</th><th>DQ30+ Ct</th><th>DQ30+ %</th><th>DQ60+ Ct</th><th>DQ60+ %</th></tr>
+                <tr><td><strong>Tier 1 (681+)</strong></td><td>327 (79.8%)</td><td>$42.2M</td><td>736</td><td class="warning-cell">16</td><td class="warning-cell">3.90%</td><td class="warning-cell">10</td><td class="warning-cell">2.44%</td></tr>
+                <tr><td><strong>Tier 2 (641-680)</strong></td><td>69 (16.8%)</td><td>$8.1M</td><td>659</td><td class="danger-cell">12</td><td class="danger-cell">2.93%</td><td class="danger-cell">7</td><td class="danger-cell">1.71%</td></tr>
+                <tr><td><strong>Tier 3 (600-640)</strong></td><td>8 (2.0%)</td><td>$0.6M</td><td>616</td><td class="warning-cell">1</td><td>0.24%</td><td class="warning-cell">1</td><td>0.24%</td></tr>
+                <tr><td style="color: #64748B;"><em>No Tier (new)</em></td><td style="color: #64748B;">6 (1.5%)</td><td style="color: #64748B;">$0.6M</td><td style="color: #64748B;">&#8212;</td><td class="highlight-cell">0</td><td class="highlight-cell">0.00%</td><td class="highlight-cell">0</td><td class="highlight-cell">0.00%</td></tr>
+            </table>
+            <div class="callout warning">&#x26A0;&#xFE0F; Tier 2 concentration: 17% of loans but 41% of DQ30+ count (12 of 29)</div>
+        </div>
+        <div class="card highlight">
+            <div class="section-header"><span class="section-header-icon">&#x1F3E0;</span><span class="section-header-title">Land Type Distribution</span></div>
+            <table class="tier-table">
+                <tr><th>Land Type</th><th>Loans</th><th>DQ30+ Ct</th><th>DQ30+ %</th><th>DQ60+ Ct</th></tr>
+                <tr><td>Customer Owned</td><td>156 (38%)</td><td class="warning-cell">12</td><td class="warning-cell">2.93%</td><td>8</td></tr>
+                <tr><td>Private Not Owned</td><td>231 (56%)</td><td class="warning-cell">16</td><td class="warning-cell">3.90%</td><td>9</td></tr>
+                <tr><td>Community</td><td>17 (4%)</td><td>1</td><td>0.24%</td><td>1</td></tr>
+                <tr><td style="color: #64748B;"><em>Unknown (new)</em></td><td style="color: #64748B;">6 (1%)</td><td class="highlight-cell">0</td><td class="highlight-cell">0.00%</td><td class="highlight-cell">0</td></tr>
+            </table>
+            <div class="callout info">&#x1F4A1; Private Not Owned: 56% of loans, 55% of DQ30+ &#8212; proportional risk</div>
+        </div>
+        <div class="card highlight">
+            <div class="section-header"><span class="section-header-icon">&#x1F4CA;</span><span class="section-header-title">Note Rate Bands</span></div>
+            <table class="tier-table">
+                <tr><th>Rate Band</th><th>Loans</th><th>Avg Loan</th><th>DQ30+ %</th><th>DQ60+ %</th></tr>
+                <tr><td>&lt; 8.00%</td><td>21 (5.1%)</td><td>$126,885</td><td class="warning-cell">9.5%</td><td>4.8%</td></tr>
+                <tr><td>8.00% &#8212; 8.49%</td><td>135 (32.9%)</td><td>$135,518</td><td>5.2%</td><td>3.7%</td></tr>
+                <tr><td>8.50% &#8212; 8.99%</td><td>168 (41.0%)</td><td>$125,343</td><td class="highlight-cell">4.2%</td><td class="highlight-cell">2.4%</td></tr>
+                <tr><td>9.00% &#8212; 9.99%</td><td>57 (13.9%)</td><td>$114,921</td><td class="warning-cell">12.3%</td><td class="warning-cell">7.0%</td></tr>
+                <tr><td>&#8805; 10.00%</td><td>29 (7.1%)</td><td>$103,373</td><td class="danger-cell">20.7%</td><td class="danger-cell">13.8%</td></tr>
+            </table>
+            <div class="callout danger">&#x1F534; &#8805;10% rate loans: 7% of portfolio but 20.7% DQ30+ &#8212; 5x higher risk</div>
+        </div>
+        <div class="card highlight">
+            <div class="section-header"><span class="section-header-icon">&#x2696;&#xFE0F;</span><span class="section-header-title">Portfolio Profile</span></div>
+            <div class="metric-grid">
+                <div class="metric-item"><div class="metric-label">WAC Rate<br>(Wtd Avg Coupon)</div><div class="metric-value">8.74%</div></div>
+                <div class="metric-item"><div class="metric-label">WALA<br>(Wtd Avg Loan Age)</div><div class="metric-value">9.8 mo</div></div>
+                <div class="metric-item"><div class="metric-label">WARM<br>(Wtd Avg Rem Term)</div><div class="metric-value">290 mo</div></div>
+                <div class="metric-item"><div class="metric-label">Avg DTI<br>(Debt-to-Income)</div><div class="metric-value">36.6%</div></div>
+                <div class="metric-item"><div class="metric-label">Avg FICO<br>(Credit Score)</div><div class="metric-value">721</div></div>
+                <div class="metric-item"><div class="metric-label">Avg LTV<br>(Loan-to-Value)</div><div class="metric-value">82.6%</div></div>
+            </div>
+            <div class="callout success">&#x2705; All metrics within institutional guidelines</div>
+        </div>
+    </div>
+
+    <!-- Grid Row 3 -->
+    <div class="grid-row-3">
+        <div class="card premium">
+            <div class="section-header"><span class="section-header-icon">&#x1F4C5;</span><span class="section-header-title">Origination Vintage &#8212; DQ30+ Rate</span></div>
+            <div class="chart-140"><canvas id="janVintageChart"></canvas></div>
+            <div class="chart-legend"><span>&#x1F535; Loan Count</span><span>&#x1F7E0; DQ30+ Rate (%)</span></div>
+            <div style="font-size: 8px; color: #64748B; margin-top: 4px; text-align: center;">Nov 2024 vintage (25 loans) shows 16% DQ30+ &#8212; earliest cohort, most seasoned</div>
+        </div>
+        <div class="card watch">
+            <div class="section-header"><span class="section-header-icon">&#x1F534;</span><span class="section-header-title">Watch Items</span></div>
+            <div class="insight-list">
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>DQ60+ rose to 4.39%</strong> &#8212; up from 3.53% at Dec YE</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>9 loans at 120+ DPD</strong> &#8212; repo/foreclosure pipeline</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>Tier 2 concentration:</strong> 17% of loans, 41% of DQ30+</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>&#8805;10% rate loans</strong> show 20.7% DQ30+ vs 4.2% core</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>Nov '24 vintage</strong> &#8212; 16% DQ30+ (most seasoned)</span></div>
+                <div class="insight-item"><span>&#x26A0;&#xFE0F;</span><span><strong>Mar/Jun '25 vintages</strong> &#8212; 10.9% and 11.1% DQ30+</span></div>
+            </div>
+        </div>
+        <div class="card strength">
+            <div class="section-header"><span class="section-header-icon">&#x1F7E2;</span><span class="section-header-title">Strengths</span></div>
+            <div class="insight-list">
+                <div class="insight-item"><span>&#x2705;</span><span><strong>92.9% performing</strong> (381 of 410 loans)</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>DQ30+ improved to 7.07%</strong> &#8212; down from 8.56% Dec YE</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>721 avg FICO / 82.6% LTV</strong> &#8212; strong credit</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>Core rates (8-9%)</strong> show &#8804;5.2% DQ30+</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>Dec/Jul/Nov-Jan vintages</strong> &#8212; 0-3% DQ30+</span></div>
+                <div class="insight-item"><span>&#x2705;</span><span><strong>12 new originations</strong> since Nov '25 &#8212; all performing</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Row 4 -->
+    <div class="grid-row-4">
+        <div class="card watch">
+            <div class="section-header"><span class="section-header-icon">&#x1F6A8;</span><span class="section-header-title">DQ60+ / NPL Breakdown</span></div>
+            <table class="tier-table">
+                <tr><th>DPD Bucket</th><th>Count</th><th>UPB</th><th>% of Portfolio</th></tr>
+                <tr><td>60-89 DPD</td><td class="warning-cell">6</td><td>$614,985</td><td>1.46%</td></tr>
+                <tr><td>90-119 DPD</td><td class="danger-cell">3</td><td>$245,781</td><td>0.73%</td></tr>
+                <tr><td style="color: #DC2626; font-weight: 700;">120+ DPD (Repos)</td><td class="danger-cell">9</td><td>$1,118,678</td><td>2.20%</td></tr>
+                <tr style="border-top: 1px solid rgba(239,68,68,0.3);"><td><strong>Total NPL</strong></td><td><strong style="color: #EF4444;">18</strong></td><td><strong>$1,979,444</strong></td><td><strong>4.39%</strong></td></tr>
+            </table>
+            <div class="callout danger">&#x1F534; 120+ DPD loans = 50% of NPL count and 56.5% of NPL UPB</div>
+        </div>
+        <div class="card premium">
+            <div class="section-header"><span class="section-header-icon">&#x1F52E;</span><span class="section-header-title">Resolution Outlook</span></div>
+            <div class="key-takeaways">
+                <div class="takeaway-item" style="border-left: 3px solid #10B981;">
+                    <div class="takeaway-content"><strong style="color: #10B981;">Short-Term (30-60 days)</strong><span>DQ30+ improved MoM (8.56% &#8594; 7.07%). Expect 3-5 of 11 Collections loans to cure in Feb. Monitor 6 loans at 60-89 DPD for roll risk.</span></div>
+                </div>
+                <div class="takeaway-item" style="border-left: 3px solid #F59E0B;">
+                    <div class="takeaway-content"><strong style="color: #F59E0B;">Medium-Term (60-120 days)</strong><span>3 loans in 90-119 DPD bucket will either cure or roll to 120+. Watch for seasonal tax refund cures in Q1. Tier 2 remediation plan needed.</span></div>
+                </div>
+                <div class="takeaway-item" style="border-left: 3px solid #EF4444;">
+                    <div class="takeaway-content"><strong style="color: #EF4444;">Long-Term (120+ / Repos)</strong><span>9 loans at 120+ DPD ($1.12M UPB). Est. recovery 40-60% given chattel loan recovery rates. Potential loss exposure: $447K&#8211;$671K.</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="section-header"><span class="section-header-icon">&#x1F4CB;</span><span class="section-header-title">Executive Summary</span></div>
+            <div class="exec-summary">
+                <p><strong>January 2026 shows mixed signals.</strong> The headline DQ30+ rate <span class="hl-green">improved to 7.07%</span> from December's 8.56% &#8212; a welcome reversal after the year-end spike. However, DQ60+ <span class="hl-red">rose to 4.39%</span> (from 3.53%), driven by loans rolling from the 30-59 bucket into deeper delinquency.</p>
+                <p><strong>Credit segmentation reveals concentration risk:</strong> Tier 2 loans (17% of portfolio) account for 41% of DQ30+ and 39% of DQ60+. High-rate loans (&#8805;10%) show 5x the DQ rate of the core 8.50-8.99% band. These two segments merit tighter monitoring and possible underwriting recalibration.</p>
+                <p><strong>The 120+ DPD bucket (9 loans, $1.12M)</strong> represents the most urgent action item. These loans are likely in various stages of repossession/workout. Assuming 40-60% chattel recovery rates, loss exposure ranges from <span class="hl-red">$447K&#8211;$671K</span>.</p>
+                <p><strong>Positive indicators:</strong> 92.9% performing rate, 12 new originations since Nov '25 all performing, and a solid credit foundation (721 FICO, 82.6% LTV). The DQ30+ improvement suggests December's spike was partially seasonal. <span class="hl-green">Expect continued normalization through Q1 2026.</span></p>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /jan-content -->
+
+    <!-- Footer -->
+    <div class="footer">
+        <div><strong>PorchPass, LLC</strong> &#8226; NMLS #2489505 &#8226; Manufactured Housing Finance &#8226; San Antonio, TX</div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="color: #475569; font-size: 8px;">&#x2139; = hover for details</span>
+            <span>Confidential &#8226; Board of Directors Only &#8226; Generated <span id="currentDate"></span></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
+        Chart.defaults.color = '#94A3B8';
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+        Chart.defaults.font.size = 9;
+
+        const tooltipStyle = {
+            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+            borderColor: '#475569', borderWidth: 1,
+            titleColor: '#F8FAFC', bodyColor: '#CBD5E1',
+            padding: 12, cornerRadius: 8,
+            titleFont: { size: 11, weight: 'bold' },
+            bodyFont: { size: 10 }, displayColors: true, boxPadding: 4,
+        };
+
+        // ============================================================
+        // 1. Historical DQ Chart (Dec 2025 â†’ Jan 2026 â†’ Feb 2026 MTD)
+        // ============================================================
+        const histCtx = document.getElementById('historicalDqChart').getContext('2d');
+        const dqGrad = histCtx.createLinearGradient(0, 0, 0, 140);
+        dqGrad.addColorStop(0, 'rgba(245, 158, 11, 0.5)');
+        dqGrad.addColorStop(1, 'rgba(245, 158, 11, 0.02)');
+        const dq60Grad = histCtx.createLinearGradient(0, 0, 0, 140);
+        dq60Grad.addColorStop(0, 'rgba(239, 68, 68, 0.5)');
+        dq60Grad.addColorStop(1, 'rgba(239, 68, 68, 0.02)');
+
+        new Chart(histCtx, {
+            type: 'line',
+            data: {
+                labels: ['Dec 2025 (YE)', 'Jan 2026 (EOM)', 'Feb 2026 (MTD)'],
+                datasets: [
+                    {
+                        label: 'DQ30+ Rate',
+                        data: [8.56, 7.07, 3.87],
+                        borderColor: '#F59E0B', backgroundColor: dqGrad, fill: true,
+                        tension: 0.4, borderWidth: 3,
+                        pointRadius: 6, pointBackgroundColor: '#F59E0B',
+                        pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                        pointHoverRadius: 8,
+                    },
+                    {
+                        label: 'DQ60+ Rate',
+                        data: [3.53, 4.39, 3.39],
+                        borderColor: '#EF4444', backgroundColor: dq60Grad, fill: true,
+                        tension: 0.4, borderWidth: 3,
+                        pointRadius: 6, pointBackgroundColor: '#EF4444',
+                        pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                        pointHoverRadius: 8,
+                    },
+                    {
+                        label: '120+ DPD Rate',
+                        data: [2.20, 2.20, 2.18],
+                        borderColor: '#475569', backgroundColor: 'transparent', fill: false,
+                        tension: 0.4, borderWidth: 2, borderDash: [5, 5],
+                        pointRadius: 5, pointBackgroundColor: '#475569',
+                        pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => ctx.dataset.label + ': ' + ctx.raw.toFixed(2) + '%'
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            dq30Target: {
+                                type: 'line', yMin: 5, yMax: 5,
+                                borderColor: 'rgba(16, 185, 129, 0.4)', borderWidth: 1, borderDash: [3, 3],
+                                label: { display: true, content: 'Target 5%', position: 'end',
+                                    font: { size: 8 }, color: '#10B981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 3 }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { size: 10, weight: 'bold' } } },
+                    y: {
+                        grid: { color: 'rgba(148,163,184,0.08)' },
+                        min: 0, max: 12,
+                        ticks: { callback: (v) => v + '%', font: { size: 9 } }
+                    }
+                }
+            }
+        });
+
+        // ============================================================
+        // 2. DPD Distribution Doughnut
+        // ============================================================
+        new Chart(document.getElementById('dpdChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Current (0 DPD)', '1-29 DPD', '30-59 DPD', '60-89 DPD', '90-119 DPD', '120+ DPD', 'Paid Off'],
+                datasets: [{
+                    data: [352, 34, 2, 8, 0, 9, 8],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(132, 204, 22, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(249, 115, 22, 0.85)',
+                        'rgba(239, 68, 68, 0.85)',
+                        'rgba(220, 38, 38, 0.85)',
+                        'rgba(100, 116, 139, 0.85)'
+                    ],
+                    hoverBackgroundColor: ['#10B981', '#84CC16', '#F59E0B', '#F97316', '#EF4444', '#DC2626', '#64748B'],
+                    borderWidth: 0, hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '58%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => {
+                                const pct = ((ctx.raw / 413) * 100).toFixed(1);
+                                return ctx.label + ': ' + ctx.raw + ' loans (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // ============================================================
+        // 3. Vintage DQ Chart
+        // ============================================================
+        const vintLabels = ['Nov 24', 'Dec 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'May 25', 'Jun 25', 'Jul 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26'];
+        const vintLoans = [24, 32, 51, 55, 63, 48, 85, 27, 6, 2, 4, 4, 4];
+        const vintDQ30 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        const vintDQ60 = [12.0, 0.0, 1.9, 1.8, 7.8, 2.0, 3.5, 11.1, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+        new Chart(document.getElementById('vintageChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: vintLabels,
+                datasets: [
+                    {
+                        label: 'Loan Count', data: vintLoans,
+                        backgroundColor: 'rgba(96, 165, 250, 0.75)',
+                        hoverBackgroundColor: '#60A5FA', borderRadius: 4, yAxisID: 'y',
+                    },
+                    {
+                        label: 'DQ30-59 Rate', data: vintDQ30, type: 'line',
+                        borderColor: '#F59E0B', backgroundColor: 'transparent',
+                        tension: 0.4, borderWidth: 2.5,
+                        pointRadius: 4, pointBackgroundColor: '#F59E0B',
+                        pointHoverRadius: 6, pointHoverBorderColor: '#F8FAFC', pointHoverBorderWidth: 2,
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'DQ60+ Rate', data: vintDQ60, type: 'line',
+                        borderColor: '#EF4444', backgroundColor: 'transparent',
+                        tension: 0.4, borderWidth: 2.5,
+                        pointRadius: 4, pointBackgroundColor: '#EF4444',
+                        pointHoverRadius: 6, pointHoverBorderColor: '#F8FAFC', pointHoverBorderWidth: 2,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tooltipStyle,
+                        callbacks: {
+                            label: (ctx) => {
+                                if (ctx.dataset.label === 'Loan Count') return 'Originations: ' + ctx.raw + ' loans';
+                                if (ctx.dataset.label === 'DQ30-59 Rate') return 'DQ30-59 Rate: ' + ctx.raw.toFixed(1) + '%';
+                                return 'DQ60+ Rate: ' + ctx.raw.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { size: 8 } } },
+                    y: {
+                        position: 'left', grid: { color: 'rgba(148,163,184,0.08)' },
+                        ticks: { font: { size: 8 } }, min: 0, max: 100
+                    },
+                    y1: {
+                        position: 'right', grid: { display: false },
+                        ticks: { callback: (v) => v + '%', font: { size: 8 } },
+                        min: 0, max: 20
+                    }
+                }
+            }
+        });
+
+        // Period Toggle (visual only)
+        // ============================================================
+        // Jan Charts — lazy init on first toggle
+        // ============================================================
+        let janChartsInitialized = false;
+
+        function initJanCharts() {
+            if (janChartsInitialized) return;
+            janChartsInitialized = true;
+
+            // Jan Historical DQ Trend (Dec → Jan only)
+            const janHistCtx = document.getElementById('janHistChart').getContext('2d');
+            const janDq30Grad = janHistCtx.createLinearGradient(0, 0, 0, 140);
+            janDq30Grad.addColorStop(0, 'rgba(245, 158, 11, 0.25)');
+            janDq30Grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+            const janDq60Grad = janHistCtx.createLinearGradient(0, 0, 0, 140);
+            janDq60Grad.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
+            janDq60Grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+            new Chart(janHistCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Dec 2025', 'Jan 2026'],
+                    datasets: [
+                        {
+                            label: 'DQ30+ Rate',
+                            data: [8.56, 7.07],
+                            borderColor: '#F59E0B', backgroundColor: janDq30Grad, fill: true,
+                            tension: 0.4, borderWidth: 3,
+                            pointRadius: 6, pointBackgroundColor: '#F59E0B',
+                            pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                        },
+                        {
+                            label: 'DQ60+ Rate',
+                            data: [3.53, 4.39],
+                            borderColor: '#EF4444', backgroundColor: janDq60Grad, fill: true,
+                            tension: 0.4, borderWidth: 3,
+                            pointRadius: 6, pointBackgroundColor: '#EF4444',
+                            pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                        },
+                        {
+                            label: '120+ DPD Rate',
+                            data: [2.20, 2.20],
+                            borderColor: '#475569', backgroundColor: 'transparent', fill: false,
+                            tension: 0.4, borderWidth: 2, borderDash: [5, 5],
+                            pointRadius: 5, pointBackgroundColor: '#475569',
+                            pointBorderColor: '#1E293B', pointBorderWidth: 2,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { ...tooltipStyle, callbacks: { label: (ctx) => ctx.dataset.label + ': ' + ctx.raw.toFixed(2) + '%' } },
+                        annotation: { annotations: { dq30Target: { type: 'line', yMin: 5, yMax: 5, borderColor: 'rgba(16, 185, 129, 0.4)', borderWidth: 1, borderDash: [3, 3], label: { display: true, content: 'Target 5%', position: 'end', font: { size: 8 }, color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 3 } } } }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { grid: { color: 'rgba(148,163,184,0.08)' }, min: 0, max: 12, ticks: { callback: (v) => v + '%', font: { size: 9 } } }
+                    }
+                }
+            });
+
+            // Jan DPD Doughnut
+            new Chart(document.getElementById('janDpdChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Current (0 DPD)', '1-29 DPD', '30-59 DPD', '60-89 DPD', '90-119 DPD', '120+ DPD', 'Paid Off'],
+                    datasets: [{
+                        data: [345, 28, 11, 6, 3, 9, 8],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.85)', 'rgba(132, 204, 22, 0.85)',
+                            'rgba(245, 158, 11, 0.85)', 'rgba(249, 115, 22, 0.85)',
+                            'rgba(239, 68, 68, 0.85)', 'rgba(220, 38, 38, 0.85)',
+                            'rgba(100, 116, 139, 0.85)'
+                        ],
+                        borderWidth: 0, hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '58%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { ...tooltipStyle, callbacks: { label: (ctx) => { const pct = ((ctx.raw / 410) * 100).toFixed(1); return ctx.label + ': ' + ctx.raw + ' loans (' + pct + '%)'; } } }
+                    }
+                }
+            });
+
+            // Jan Vintage Chart
+            const janVintLabels = ['Nov 24', 'Dec 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'May 25', 'Jun 25', 'Jul 25', 'Nov 25', 'Dec 25', 'Jan 26'];
+            const janVintLoans = [25, 32, 49, 53, 64, 49, 85, 27, 6, 2, 4, 14];
+            const janVintDQ30 = [16.0, 3.1, 6.1, 5.7, 10.9, 4.1, 5.9, 11.1, 0.0, 0.0, 0.0, 0.0];
+
+            new Chart(document.getElementById('janVintageChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: janVintLabels,
+                    datasets: [
+                        {
+                            label: 'Loan Count', data: janVintLoans,
+                            backgroundColor: 'rgba(96, 165, 250, 0.75)', borderRadius: 4, yAxisID: 'y',
+                        },
+                        {
+                            label: 'DQ30+ Rate', data: janVintDQ30, type: 'line',
+                            borderColor: '#F59E0B', backgroundColor: 'transparent',
+                            tension: 0.4, borderWidth: 2.5,
+                            pointRadius: 4, pointBackgroundColor: '#F59E0B',
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { ...tooltipStyle, callbacks: { label: (ctx) => { if (ctx.dataset.label === 'Loan Count') return 'Originations: ' + ctx.raw + ' loans'; return 'DQ30+ Rate: ' + ctx.raw.toFixed(1) + '%'; } } }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { size: 8 } } },
+                        y: { position: 'left', grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { font: { size: 8 } }, min: 0, max: 100 },
+                        y1: { position: 'right', grid: { display: false }, ticks: { callback: (v) => v + '%', font: { size: 8 } }, min: 0, max: 25 }
+                    }
+                }
+            });
+        }
+
+        // ============================================================
+        // Period Toggle — full container swap + header update
+        // ============================================================
+        function togglePeriod(period) {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+
+            const febEl = document.getElementById('feb-content');
+            const janEl = document.getElementById('jan-content');
+
+            if (period === 'jan') {
+                document.querySelectorAll('.period-btn')[0].classList.add('active');
+                febEl.style.display = 'none';
+                janEl.style.display = 'block';
+                document.getElementById('hdr-badge').textContent = 'JAN 2026 EOM';
+                document.getElementById('hdr-subtitle').innerHTML = 'PorchPass Manufactured Housing Finance \u2022 Delinquency & Portfolio Analytics \u2022 As of January 31, 2026';
+                document.getElementById('hdr-date').innerHTML = 'Report Date: <strong>January 31, 2026</strong>';
+                document.getElementById('hdr-denom').textContent = 'All rates = Count / 410 Total Loans';
+                initJanCharts();
+            } else {
+                document.querySelectorAll('.period-btn')[1].classList.add('active');
+                janEl.style.display = 'none';
+                febEl.style.display = 'block';
+                document.getElementById('hdr-badge').textContent = 'FEB 2026 MTD';
+                document.getElementById('hdr-subtitle').innerHTML = 'PorchPass Manufactured Housing Finance \u2022 Delinquency & Portfolio Analytics \u2022 As of February 15, 2026';
+                document.getElementById('hdr-date').innerHTML = 'Report Date: <strong>February 15, 2026</strong>';
+                document.getElementById('hdr-denom').textContent = 'All rates = Count / 413 Total Loans';
+            }
+        }
+    </script>
+</body>
+</html>
